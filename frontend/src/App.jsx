@@ -238,6 +238,9 @@ function Dashboard() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [predictedImageUrl, setPredictedImageUrl] = useState(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState('');
+  const [lightboxAlt, setLightboxAlt] = useState('');
 
   if (!loggedIn) return <Navigate to="/login" />;
 
@@ -280,9 +283,9 @@ function Dashboard() {
       });
       console.log('Frontend received response:', res.data);
       setPredictedImage(res.data.image.predictedImage);
-      setPredictedImageUrl(res.data.predictedImageUrl ? `http://localhost:5000${res.data.predictedImageUrl}` : null);
+      setPredictedImageUrl(`http://localhost:5000/uploads/${res.data.image.predictedImage}`);
       setOriginalImageUrl(`http://localhost:5000/uploads/${res.data.image.originalImage}`);
-      console.log('Set predicted image URL:', res.data.predictedImageUrl ? `http://localhost:5000${res.data.predictedImageUrl}` : null);
+      console.log('Set predicted image URL:', `http://localhost:5000/uploads/${res.data.image.predictedImage}`);
       console.log('Set original image URL:', `http://localhost:5000/uploads/${res.data.image.originalImage}`);
       setHistory([res.data.image, ...history]);
       setImage(null);
@@ -318,30 +321,59 @@ function Dashboard() {
             <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
           </label>
           {imagePreview && (
-            <div className="mb-4">
-              <img src={imagePreview} alt="Preview" className="max-h-48 rounded shadow-md mx-auto" />
+            <div className="mb-4 text-center">
+              <img src={imagePreview} alt="Preview" className="max-h-48 rounded shadow-md mx-auto mb-2" />
+              <p className="text-sm text-gray-600">
+                Selected: <span className="font-medium">{image?.name}</span>
+              </p>
             </div>
           )}
           <button type="submit" className="bg-purple-700 text-white px-6 py-2 rounded hover:bg-purple-800 transition font-semibold disabled:opacity-50" disabled={!image || loading}>
             {loading ? 'Processing...' : 'Submit'}
           </button>
+          <p className="text-sm text-gray-600 mt-2 text-center max-w-md">
+            Upload a lunar image and our AI model will detect and highlight craters. 
+            Both the original and predicted images will be displayed for comparison.
+          </p>
         </form>
         {uploadError && <div className="mt-4 text-red-600 font-semibold">{uploadError}</div>}
-        {loading && <div className="mt-4 text-purple-700 font-semibold">Running model, please wait...</div>}
+        {loading && (
+          <div className="mt-4 text-purple-700 font-semibold flex flex-col items-center justify-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-700"></div>
+              <span>Running YOLO model...</span>
+            </div>
+            <div className="text-sm text-purple-600">
+              This may take a few moments depending on image complexity
+            </div>
+          </div>
+        )}
         
         {/* Show results after prediction */}
-        {console.log('Render condition check:', { predictedImage, predictedImageUrl, originalImageUrl })}
-        {originalImageUrl && (
+        {originalImageUrl && !loading && (
           <div className="mt-8 w-full">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-2 rounded-full">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="font-semibold">Detection Complete!</span>
+              </div>
+            </div>
             <h3 className="text-xl font-bold text-purple-700 mb-4 text-center">Detection Results</h3>
             <div className="flex flex-col md:flex-row gap-8 justify-center items-start">
               {/* Original Image */}
-              <div className="flex flex-col items-center bg-purple-50 p-4 rounded-lg">
+              <div className="flex flex-col items-center bg-purple-50 p-4 rounded-lg flex-1">
                 <h4 className="text-lg font-semibold text-purple-600 mb-3">Original Image</h4>
                 <img 
                   src={originalImageUrl} 
                   alt="Original" 
-                  className="max-h-64 rounded shadow-md border-2 border-purple-200" 
+                  className="w-full max-w-md h-64 object-cover rounded shadow-md border-2 border-purple-200 cursor-pointer hover:opacity-90 transition-opacity" 
+                  onClick={() => {
+                    setLightboxSrc(originalImageUrl);
+                    setLightboxAlt('Original Image');
+                    setLightboxOpen(true);
+                  }}
                   onError={(e) => {
                     console.error('Failed to load original image:', e.target.src);
                     e.target.style.display = 'none';
@@ -353,17 +385,18 @@ function Dashboard() {
               </div>
               
               {/* Predicted Image */}
-              <div className="flex flex-col items-center bg-green-50 p-4 rounded-lg">
+              <div className="flex flex-col items-center bg-green-50 p-4 rounded-lg flex-1">
                 <h4 className="text-lg font-semibold text-green-600 mb-3">Predicted Image</h4>
-                {(predictedImage || predictedImageUrl) ? (
+                {predictedImageUrl ? (
                   <img 
-                    src={(() => {
-                      const src = predictedImageUrl ? `http://localhost:5000${predictedImageUrl}` : (predictedImage ? `http://localhost:5000/uploads/${predictedImage}` : '');
-                      console.log('Predicted image src:', src);
-                      return src;
-                    })()}
+                    src={predictedImageUrl}
                     alt="Predicted" 
-                    className="max-h-64 rounded shadow-md border-2 border-green-200" 
+                    className="w-full max-w-md h-64 object-cover rounded shadow-md border-2 border-green-200 cursor-pointer hover:opacity-90 transition-opacity" 
+                    onClick={() => {
+                      setLightboxSrc(predictedImageUrl);
+                      setLightboxAlt('Predicted Image');
+                      setLightboxOpen(true);
+                    }}
                     onError={(e) => {
                       console.error('Failed to load predicted image:', e.target.src);
                       e.target.style.display = 'none';
@@ -373,7 +406,7 @@ function Dashboard() {
                     }}
                   />
                 ) : (
-                  <div className="max-h-64 w-64 bg-gray-200 rounded shadow-md border-2 border-green-200 flex items-center justify-center">
+                  <div className="w-full max-w-md h-64 bg-gray-200 rounded shadow-md border-2 border-green-200 flex items-center justify-center">
                     <p className="text-gray-500">Processing...</p>
                   </div>
                 )}
@@ -384,6 +417,7 @@ function Dashboard() {
         <div className="mt-8 w-full flex justify-center">
           <Link to="/history" className="text-purple-700 underline font-semibold">View History</Link>
         </div>
+        <Lightbox open={lightboxOpen} onClose={() => setLightboxOpen(false)} src={lightboxSrc} alt={lightboxAlt} />
       </div>
     </div>
   );
