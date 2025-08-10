@@ -25,6 +25,7 @@ app.use('/api/auth', authRoutes);
 const imageRoutes = require('./routes/image');
 app.use('/api/image', imageRoutes);
 app.use('/uploads', express.static(require('path').join(__dirname, 'uploads')));
+app.use('/api/image/uploads', express.static(require('path').join(__dirname, 'uploads')));
 
 app.get('/', (req, res) => {
   res.send('Crater Detection API is running');

@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, useEffect } from 'react';
+import { useState, createContext, useContext, useEffect, useRef } from 'react';
 import { Routes, Route, Link, useNavigate, Navigate } from 'react-router-dom';
 import api from './api';
 
@@ -12,6 +12,40 @@ function AuthProvider({ children }) {
     <AuthContext.Provider value={{ loggedIn, setLoggedIn }}>
       {children}
     </AuthContext.Provider>
+  );
+}
+
+// Toast Context and Provider
+const ToastContext = createContext();
+export function useToast() { return useContext(ToastContext); }
+function ToastProvider({ children }) {
+  const [toast, setToast] = useState(null);
+  const timeoutRef = useRef();
+  const showToast = (message, type = 'success', duration = 3000) => {
+    setToast({ message, type });
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setToast(null), duration);
+  };
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      {children}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-50 px-6 py-3 rounded shadow-lg text-white font-semibold transition-all ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>{toast.message}</div>
+      )}
+    </ToastContext.Provider>
+  );
+}
+
+// Lightbox Component
+function Lightbox({ open, onClose, src, alt }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80" onClick={onClose}>
+      <div className="relative" onClick={e => e.stopPropagation()}>
+        <img src={src} alt={alt} style={{ width: 1024, height: 1024, maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', borderRadius: 12 }} />
+        <button onClick={onClose} className="absolute top-2 right-2 bg-white bg-opacity-80 rounded-full px-3 py-1 text-black font-bold text-lg shadow hover:bg-opacity-100">&times;</button>
+      </div>
+    </div>
   );
 }
 
@@ -123,6 +157,74 @@ function Signup() {
   );
 }
 
+function History() {
+  const { loggedIn } = useAuth();
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState('');
+  const [lightboxAlt, setLightboxAlt] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    const fetchHistory = async () => {
+      setError('');
+      setLoading(true);
+      try {
+        const res = await api.get('/api/image/history');
+        setHistory(res.data);
+      } catch (err) {
+        setError('Failed to load history.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [loggedIn]);
+
+  if (!loggedIn) return <Navigate to="/login" />;
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen w-full text-center">
+      <nav className="w-full flex justify-between items-center p-6 gap-4">
+        <span className="text-2xl font-bold text-purple-700 text-center cursor-pointer" onClick={() => navigate('/dashboard')}>CraterVision</span>
+        <Link to="/dashboard" className="text-purple-700 underline">Dashboard</Link>
+      </nav>
+      <div className="bg-white bg-opacity-90 p-8 rounded-lg shadow-lg w-full max-w-4xl flex flex-col items-center justify-center">
+        <h2 className="text-3xl font-bold mb-6 text-purple-700 text-center">Image History</h2>
+        {loading ? (
+          <div className="text-purple-700 font-semibold">Loading history...</div>
+        ) : error ? (
+          <div className="text-red-600 font-semibold">{error}</div>
+        ) : history.length === 0 ? (
+          <p className="text-gray-500">No uploads yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+            {history.map((item, idx) => (
+              <div key={idx} className="flex flex-col items-center bg-purple-50 rounded p-4 shadow w-full">
+                <span className="text-xs text-gray-500 mb-2">{new Date(item.createdAt).toLocaleString()}</span>
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
+                  <div>
+                    <div className="font-semibold text-purple-700 mb-1">Original</div>
+                    <img src={`http://localhost:5000/uploads/${item.originalImage}`} alt="Original" style={{ width: 1024, height: 1024, objectFit: 'cover', maxWidth: '100%', maxHeight: 400, borderRadius: 8, cursor: 'pointer' }} onClick={() => { setLightboxSrc(`http://localhost:5000/uploads/${item.originalImage}`); setLightboxAlt('Original'); setLightboxOpen(true); }} />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-purple-700 mb-1">Predicted</div>
+                    <img src={`http://localhost:5000/uploads/${item.predictedImage}`} alt="Predicted" style={{ width: 1024, height: 1024, objectFit: 'cover', maxWidth: '100%', maxHeight: 400, borderRadius: 8, cursor: 'pointer' }} onClick={() => { setLightboxSrc(`http://localhost:5000/uploads/${item.predictedImage}`); setLightboxAlt('Predicted'); setLightboxOpen(true); }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <Lightbox open={lightboxOpen} onClose={() => setLightboxOpen(false)} src={lightboxSrc} alt={lightboxAlt} />
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -131,8 +233,11 @@ function Dashboard() {
   const [history, setHistory] = useState([]);
   const [uploadError, setUploadError] = useState('');
   const [historyError, setHistoryError] = useState('');
+  const [originalImageUrl, setOriginalImageUrl] = useState(null);
   const { loggedIn, setLoggedIn } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [predictedImageUrl, setPredictedImageUrl] = useState(null);
 
   if (!loggedIn) return <Navigate to="/login" />;
 
@@ -155,6 +260,10 @@ function Dashboard() {
     if (file) {
       setImage(file);
       setImagePreview(URL.createObjectURL(file));
+      // Clear previous results when new image is selected
+      setPredictedImage(null);
+      setPredictedImageUrl(null);
+      setOriginalImageUrl(null);
     }
   };
 
@@ -169,12 +278,18 @@ function Dashboard() {
       const res = await api.post('/api/image/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+      console.log('Frontend received response:', res.data);
       setPredictedImage(res.data.image.predictedImage);
+      setPredictedImageUrl(res.data.predictedImageUrl ? `http://localhost:5000${res.data.predictedImageUrl}` : null);
+      setOriginalImageUrl(`http://localhost:5000/uploads/${res.data.image.originalImage}`);
+      console.log('Set predicted image URL:', res.data.predictedImageUrl ? `http://localhost:5000${res.data.predictedImageUrl}` : null);
+      console.log('Set original image URL:', `http://localhost:5000/uploads/${res.data.image.originalImage}`);
       setHistory([res.data.image, ...history]);
       setImage(null);
-      setImagePreview(null);
+      showToast('Image uploaded successfully!', 'success');
     } catch (err) {
       setUploadError(err.response?.data?.message || 'Upload failed.');
+      showToast(err.response?.data?.message || 'Upload failed.', 'error');
     } finally {
       setLoading(false);
     }
@@ -194,7 +309,7 @@ function Dashboard() {
       >
         Logout
       </button>
-      <div className="bg-white bg-opacity-90 p-8 rounded-lg shadow-lg w-full max-w-2xl flex flex-col items-center justify-center">
+      <div className="bg-white bg-opacity-90 p-8 rounded-lg shadow-lg w-full max-w-4xl flex flex-col items-center justify-center">
         <h2 className="text-3xl font-bold mb-6 text-purple-700 text-center">Crater Detection Dashboard</h2>
         <form className="flex flex-col items-center w-full" onSubmit={handleSubmit}>
           <label className="w-full flex flex-col items-center px-4 py-6 bg-purple-50 text-purple-700 rounded-lg shadow-md tracking-wide uppercase border border-purple-300 cursor-pointer hover:bg-purple-100 mb-4">
@@ -213,30 +328,61 @@ function Dashboard() {
         </form>
         {uploadError && <div className="mt-4 text-red-600 font-semibold">{uploadError}</div>}
         {loading && <div className="mt-4 text-purple-700 font-semibold">Running model, please wait...</div>}
-        {predictedImage && (
-          <div className="mt-8">
-            <h3 className="text-xl font-bold text-purple-700 mb-2">Predicted Image</h3>
-            <img src={`http://localhost:5000/uploads/${predictedImage}`} alt="Predicted" className="max-h-48 rounded shadow-md mx-auto" />
+        
+        {/* Show results after prediction */}
+        {console.log('Render condition check:', { predictedImage, predictedImageUrl, originalImageUrl })}
+        {originalImageUrl && (
+          <div className="mt-8 w-full">
+            <h3 className="text-xl font-bold text-purple-700 mb-4 text-center">Detection Results</h3>
+            <div className="flex flex-col md:flex-row gap-8 justify-center items-start">
+              {/* Original Image */}
+              <div className="flex flex-col items-center bg-purple-50 p-4 rounded-lg">
+                <h4 className="text-lg font-semibold text-purple-600 mb-3">Original Image</h4>
+                <img 
+                  src={originalImageUrl} 
+                  alt="Original" 
+                  className="max-h-64 rounded shadow-md border-2 border-purple-200" 
+                  onError={(e) => {
+                    console.error('Failed to load original image:', e.target.src);
+                    e.target.style.display = 'none';
+                  }}
+                  onLoad={(e) => {
+                    console.log('Successfully loaded original image:', e.target.src);
+                  }}
+                />
+              </div>
+              
+              {/* Predicted Image */}
+              <div className="flex flex-col items-center bg-green-50 p-4 rounded-lg">
+                <h4 className="text-lg font-semibold text-green-600 mb-3">Predicted Image</h4>
+                {(predictedImage || predictedImageUrl) ? (
+                  <img 
+                    src={(() => {
+                      const src = predictedImageUrl ? `http://localhost:5000${predictedImageUrl}` : (predictedImage ? `http://localhost:5000/uploads/${predictedImage}` : '');
+                      console.log('Predicted image src:', src);
+                      return src;
+                    })()}
+                    alt="Predicted" 
+                    className="max-h-64 rounded shadow-md border-2 border-green-200" 
+                    onError={(e) => {
+                      console.error('Failed to load predicted image:', e.target.src);
+                      e.target.style.display = 'none';
+                    }}
+                    onLoad={(e) => {
+                      console.log('Successfully loaded predicted image:', e.target.src);
+                    }}
+                  />
+                ) : (
+                  <div className="max-h-64 w-64 bg-gray-200 rounded shadow-md border-2 border-green-200 flex items-center justify-center">
+                    <p className="text-gray-500">Processing...</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
-        <div className="mt-8 w-full">
-          <h3 className="text-lg font-bold text-purple-700 mb-2">History</h3>
-          {historyError && <div className="text-red-600">{historyError}</div>}
-          {history.length === 0 ? (
-            <p className="text-gray-500">No uploads yet.</p>
-          ) : (
-            <ul className="space-y-4">
-              {history.map((item, idx) => (
-                <li key={idx} className="flex flex-col md:flex-row items-center justify-between bg-purple-50 rounded p-3 shadow">
-                  <div className="flex items-center gap-4">
-                    <img src={`http://localhost:5000/uploads/${item.originalImage}`} alt="Original" className="h-12 w-12 object-cover rounded" />
-                    <span className="text-xs text-gray-500">{new Date(item.createdAt).toLocaleString()}</span>
-                  </div>
-                  <img src={`http://localhost:5000/uploads/${item.predictedImage}`} alt="Predicted" className="h-12 w-12 object-cover rounded mt-2 md:mt-0" />
-                </li>
-              ))}
-            </ul>
-          )}
+        <div className="mt-8 w-full flex justify-center">
+          <Link to="/history" className="text-purple-700 underline font-semibold">View History</Link>
         </div>
       </div>
     </div>
@@ -245,14 +391,17 @@ function Dashboard() {
 
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/history" element={<History />} />
+        </Routes>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
