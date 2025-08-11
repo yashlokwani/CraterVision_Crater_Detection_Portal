@@ -4,10 +4,17 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 
+// Import the providers from App.jsx
+import { AuthProvider, ToastProvider } from './App.jsx'
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <AuthProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ToastProvider>
+    </AuthProvider>
   </StrictMode>,
 )
