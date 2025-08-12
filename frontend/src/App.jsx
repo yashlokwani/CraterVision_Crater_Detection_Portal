@@ -1529,7 +1529,35 @@ function Dashboard() {
 
               {/* Enhanced UI Components - Complete UI Enhancement Suite */}
         <FloatingHelp isOpen={helpOpen} onToggle={() => setHelpOpen(!helpOpen)} />
-        <QuickActionsPanel isOpen={quickActionsOpen} onToggle={() => setQuickActionsOpen(!quickActionsOpen)} />
+        <QuickActionsPanel 
+          isOpen={quickActionsOpen} 
+          onToggle={() => setQuickActionsOpen(!quickActionsOpen)}
+          onNewDetection={() => {
+            setQuickActionsOpen(false);
+            imageInputRef.current?.click();
+          }}
+          onViewAnalytics={() => {
+            setQuickActionsOpen(false);
+            setShowStats(!showStats);
+          }}
+          onBatchUpload={() => {
+            setQuickActionsOpen(false);
+            // Create a file input that accepts multiple files
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.accept = 'image/*';
+            input.onchange = (e) => {
+              console.log('Batch upload selected:', e.target.files);
+              // Process multiple files here
+            };
+            input.click();
+          }}
+          onSettings={() => {
+            setQuickActionsOpen(false);
+            setAccessibilityOpen(true);
+          }}
+        />
         <AccessibilityPanel isOpen={accessibilityOpen} onToggle={() => setAccessibilityOpen(!accessibilityOpen)} />
         <SampleImagesModal isOpen={sampleImagesOpen} onClose={() => setSampleImagesOpen(false)} />
         
@@ -2067,35 +2095,35 @@ function FloatingHelp({ isOpen, onToggle }) {
 }
 
 // Quick Actions Panel Component
-function QuickActionsPanel({ isOpen, onToggle }) {
+function QuickActionsPanel({ isOpen, onToggle, onNewDetection, onViewAnalytics, onBatchUpload, onSettings }) {
   const quickActions = [
     {
       icon: '🚀',
       title: 'New Detection',
       description: 'Start a new lunar crater detection',
       color: 'from-purple-500 to-pink-500',
-      action: () => console.log('New detection')
+      action: onNewDetection
     },
     {
       icon: '📊',
       title: 'View Analytics',
       description: 'Check your detection statistics',
       color: 'from-blue-500 to-cyan-500',
-      action: () => console.log('View analytics')
+      action: onViewAnalytics
     },
     {
       icon: '📸',
       title: 'Batch Upload',
       description: 'Upload multiple images at once',
       color: 'from-green-500 to-emerald-500',
-      action: () => console.log('Batch upload')
+      action: onBatchUpload
     },
     {
       icon: '⚙️',
       title: 'Settings',
       description: 'Customize your experience',
       color: 'from-orange-500 to-red-500',
-      action: () => console.log('Settings')
+      action: onSettings
     }
   ];
 
@@ -2137,8 +2165,11 @@ function QuickActionsPanel({ isOpen, onToggle }) {
           </div>
           
           <div className="mt-6 flex justify-center">
-            <button className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-2xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105">
-              View All Actions
+            <button 
+              onClick={onToggle}
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-2xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105"
+            >
+              Close Panel
             </button>
           </div>
         </div>
