@@ -1766,9 +1766,9 @@ function ImageComparison({ originalUrl, predictedUrl, onImageClick }) {
   const sliderRef = useRef(null);
   
   const tabs = [
-    { id: 'side-by-side', label: 'Side by Side', icon: '🔄' },
-    { id: 'overlay', label: 'Overlay', icon: '🔍' },
-    { id: 'slider', label: 'Slider', icon: '📱' }
+    { id: 'side-by-side', label: 'Side by Side', icon: '' },
+    { id: 'overlay', label: 'Overlay', icon: '' },
+    { id: 'slider', label: 'Slider', icon: '' }
   ];
 
   // Handle slider drag functionality
@@ -1979,30 +1979,50 @@ function Tooltip({ children, content, position = 'top', className = "" }) {
 
 // Floating Help System Component
 function FloatingHelp({ isOpen, onToggle }) {
-  const helpItems = [
+  const helpSections = [
+    {
+      icon: '🚀',
+      title: 'Getting Started',
+      description: 'Learn the basics of crater detection',
+      steps: [
+        'Upload a lunar or planetary image',
+        'Click "Detect Craters" to run AI analysis',
+        'View results with detected crater overlays',
+        'Download or compare original vs detected images'
+      ]
+    },
     {
       icon: '📸',
-      title: 'Upload Images',
-      description: 'Drag and drop lunar images or click to browse files',
-      action: 'Try uploading an image now!'
+      title: 'Image Requirements',
+      description: 'Best practices for optimal detection',
+      steps: [
+        'Use high-resolution images (recommended: 1024x1024+)',
+        'Ensure good contrast between craters and surface',
+        'Avoid heavily shadowed or overexposed areas',
+        'Supported formats: JPG, PNG, GIF, BMP'
+      ]
     },
     {
-      icon: '🔍',
-      title: 'View Results',
-      description: 'Compare original and AI-detected crater images',
-      action: 'Check your detection history'
+      icon: '🎯',
+      title: 'Detection Features',
+      description: 'Understanding the AI capabilities',
+      steps: [
+        'Automatically identifies circular crater formations',
+        'Highlights crater boundaries with colored overlays',
+        'Provides confidence scores for each detection',
+        'Works on lunar, planetary, and asteroid surfaces'
+      ]
     },
     {
-      icon: '📊',
-      title: 'Analytics',
-      description: 'Track your detection progress and system performance',
-      action: 'View your statistics'
-    },
-    {
-      icon: '⚙️',
-      title: 'Settings',
-      description: 'Customize your experience and preferences',
-      action: 'Access settings menu'
+      icon: '⚡',
+      title: 'Quick Actions',
+      description: 'Efficient workflow shortcuts',
+      steps: [
+        'Use floating action button (+ icon) for quick access',
+        'Sample images available for testing the model',
+        'Batch upload for processing multiple images',
+        'History page shows all previous detections'
+      ]
     }
   ];
 
@@ -2011,11 +2031,11 @@ function FloatingHelp({ isOpen, onToggle }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onToggle}></div>
-      <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-3xl shadow-2xl border border-white/20 max-w-2xl w-full animate-scale-in">
+      <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-3xl shadow-2xl border border-white/20 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              How to Use CraterVision
+            <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              CraterVision Help & Guidance
             </h3>
             <button
               onClick={onToggle}
@@ -2027,66 +2047,107 @@ function FloatingHelp({ isOpen, onToggle }) {
             </button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {helpItems.map((item, index) => (
-              <div key={index} className="bg-white/5 rounded-2xl p-4 border border-white/10 hover:border-white/20 transition-all duration-300 group">
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">
-                    {item.icon}
+          {/* Introduction */}
+          <div className="mb-8 p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl border border-blue-500/30">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-3xl">🌙</span>
+              <div>
+                <h4 className="text-xl font-semibold text-white">Welcome to CraterVision</h4>
+                <p className="text-blue-200">Advanced AI-powered crater detection system for astronomical research</p>
+              </div>
+            </div>
+            <p className="text-white/80 text-sm leading-relaxed">
+              CraterVision uses state-of-the-art machine learning algorithms to automatically detect and analyze crater formations 
+              in planetary surface images. Whether you're studying the Moon, Mars, or other celestial bodies, our system provides 
+              accurate and reliable crater identification for scientific research and exploration.
+            </p>
+          </div>
+
+          {/* Help Sections */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {helpSections.map((section, index) => (
+              <div key={index} className="bg-white/5 rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-all duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-2xl">
+                    {section.icon}
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-white font-semibold mb-1">{item.title}</h4>
-                    <p className="text-white/70 text-sm mb-2">{item.description}</p>
-                    <button className="text-purple-400 hover:text-pink-400 text-sm font-medium transition-colors duration-300">
-                      {item.action}
-                    </button>
+                  <div>
+                    <h4 className="text-lg font-semibold text-white">{section.title}</h4>
+                    <p className="text-white/60 text-sm">{section.description}</p>
                   </div>
                 </div>
+                <ul className="space-y-2">
+                  {section.steps.map((step, stepIndex) => (
+                    <li key={stepIndex} className="flex items-start gap-2 text-sm text-white/80">
+                      <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mt-2 flex-shrink-0"></span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
-          
-          <div className="mt-6 p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl border border-purple-500/30">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">💡</span>
-              <div>
-                <p className="text-white font-medium">Pro Tip</p>
-                <p className="text-white/70 text-sm">Use the floating action button for quick access to common features!</p>
-        
-        <div className="mt-6 p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl border border-purple-500/30">
-          <h4 className="text-purple-300 font-semibold mb-3 flex items-center gap-2">
-            <span className="text-lg">🎉</span>
-            UI Enhancement Complete!
-          </h4>
-          <div className="space-y-2 text-sm text-white/80">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-              <span>Enhanced Floating Action Button with 5 actions</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-              <span>Interactive Help & Guidance System</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-              <span>Quick Actions Panel for efficiency</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-              <span>Accessibility Controls & Settings</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-              <span>Keyboard Shortcuts Integration</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-              <span>Enhanced Tooltips & Visual Feedback</span>
-            </div>
-          </div>
-        </div>
+
+          {/* Keyboard Shortcuts */}
+          <div className="mb-8 p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30">
+            <h4 className="text-green-300 font-semibold mb-3 flex items-center gap-2">
+              <span className="text-lg">⌨️</span>
+              Keyboard Shortcuts
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-white/80">Upload Image</span>
+                <kbd className="px-2 py-1 bg-white/10 rounded text-green-200">Ctrl + U</kbd>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-white/80">View History</span>
+                <kbd className="px-2 py-1 bg-white/10 rounded text-green-200">Ctrl + H</kbd>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-white/80">Toggle Help</span>
+                <kbd className="px-2 py-1 bg-white/10 rounded text-green-200">F1</kbd>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-white/80">Quick Actions</span>
+                <kbd className="px-2 py-1 bg-white/10 rounded text-green-200">Ctrl + Q</kbd>
               </div>
             </div>
+          </div>
+
+          {/* Tips and Best Practices */}
+          <div className="mb-6 p-4 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-xl border border-orange-500/30">
+            <h4 className="text-orange-300 font-semibold mb-3 flex items-center gap-2">
+              <span className="text-lg">💡</span>
+              Pro Tips for Better Results
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-white/80">
+              <div>
+                <h5 className="font-medium text-white mb-2">Image Quality</h5>
+                <ul className="space-y-1">
+                  <li>• Use images with clear crater boundaries</li>
+                  <li>• Avoid motion blur or atmospheric distortion</li>
+                  <li>• Higher resolution = better detection accuracy</li>
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-medium text-white mb-2">Workflow Efficiency</h5>
+                <ul className="space-y-1">
+                  <li>• Test with sample images first</li>
+                  <li>• Use comparison modes to verify results</li>
+                  <li>• Save important detections to history</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Close Button */}
+          <div className="flex justify-center">
+            <button 
+              onClick={onToggle}
+              className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-2xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105"
+            >
+              Got it, let's start detecting!
+            </button>
           </div>
         </div>
       </div>
@@ -2623,4 +2684,6 @@ function App() {
   }
 
 export default App;
+
+
 
