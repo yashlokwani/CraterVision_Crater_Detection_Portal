@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, useEffect, useRef } from 'react';
+import { useState, createContext, useContext, useEffect, useRef, useCallback } from 'react';
 import { Routes, Route, Link, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import api from './api';
 
@@ -42,6 +42,15 @@ function useAuth() { return useContext(AuthContext); }
 
 export function AuthProvider({ children }) {
   const [loggedIn, setLoggedIn] = useState(false);
+  
+  // Check for existing token on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setLoggedIn(true);
+    }
+  }, []);
+  
   return (
     <AuthContext.Provider value={{ loggedIn, setLoggedIn }}>
       {children}
@@ -136,6 +145,112 @@ function ParticleSystem() {
   );
 }
 
+// Sample Images Modal Component
+function SampleImagesModal({ isOpen, onClose }) {
+  const sampleImages = [
+    {
+      id: 1,
+      name: "Sample Crater Image 1",
+      url: "/images.jpeg", // Using the existing sample image
+      description: "High-resolution lunar crater image for testing detection algorithms"
+    },
+    {
+      id: 2,
+      name: "Sample Crater Image 2", 
+      url: "/yo.jpg", // Using the existing sample image
+      description: "Complex crater formation with multiple impact sites"
+    }
+  ];
+
+  const downloadImage = async (imageUrl, imageName) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = imageName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading image:', error);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Sample Images for Testing
+            </h2>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors duration-200"
+            >
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-white/70 mt-2">
+            Download these sample crater images to test the detection model
+          </p>
+        </div>
+
+        {/* Sample Images Grid */}
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {sampleImages.map((image) => (
+              <div key={image.id} className="bg-white/5 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300">
+                <div className="relative group">
+                  <img
+                    src={image.url}
+                    alt={image.name}
+                    className="w-full h-48 object-cover rounded-xl"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center">
+                    <button
+                      onClick={() => downloadImage(image.url, `${image.name}.jpg`)}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                    >
+                      <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Download
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <h3 className="text-lg font-semibold text-white">{image.name}</h3>
+                  <p className="text-white/60 text-sm mt-1">{image.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Instructions */}
+          <div className="mt-8 p-4 bg-blue-500/20 rounded-xl border border-blue-500/30">
+            <h4 className="text-white font-semibold mb-2">How to use:</h4>
+            <ol className="text-white/80 text-sm space-y-1">
+              <li>1. Download one or both sample images</li>
+              <li>2. Go to the main dashboard</li>
+              <li>3. Upload the downloaded image using the "Upload Image" button</li>
+              <li>4. Click "Detect Craters" to test the model</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Enhanced Floating Action Button with integrated actions
 function FloatingActionButton({ isOpen, onToggle, actions = [] }) {
   return (
@@ -218,6 +333,8 @@ function SkeletonLoader({ className = "", lines = 1, height = "h-4" }) {
 
 // Enhanced Mobile Menu Component
 function MobileMenu({ isOpen, onClose, children }) {
+  const location = useLocation();
+  
   if (!isOpen) return null;
   
   return (
@@ -248,44 +365,50 @@ function MobileMenu({ isOpen, onClose, children }) {
 
           {/* Navigation Links */}
           <nav className="space-y-4 mb-8">
-            <Link
-              to="/"
-              onClick={onClose}
-              className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all duration-300 group"
-            >
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              </div>
-              <span className="text-white font-medium group-hover:text-purple-300 transition-colors duration-300">Home</span>
-            </Link>
+            {location.pathname !== '/' && (
+              <Link
+                to="/"
+                onClick={onClose}
+                className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all duration-300 group"
+              >
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                </div>
+                <span className="text-white font-medium group-hover:text-purple-300 transition-colors duration-300">Home</span>
+              </Link>
+            )}
 
-            <Link
-              to="/dashboard"
-              onClick={onClose}
-              className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all duration-300 group"
-            >
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <span className="text-white font-medium group-hover:text-blue-300 transition-colors duration-300">Dashboard</span>
-            </Link>
+            {location.pathname !== '/dashboard' && (
+              <Link
+                to="/dashboard"
+                onClick={onClose}
+                className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all duration-300 group"
+              >
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <span className="text-white font-medium group-hover:text-blue-300 transition-colors duration-300">Dashboard</span>
+              </Link>
+            )}
 
-            <Link
-              to="/history"
-              onClick={onClose}
-              className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all duration-300 group"
-            >
-              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <span className="text-white font-medium group-hover:text-green-300 transition-colors duration-300">History</span>
-            </Link>
+            {location.pathname !== '/history' && (
+              <Link
+                to="/history"
+                onClick={onClose}
+                className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all duration-300 group"
+              >
+                <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <span className="text-white font-medium group-hover:text-green-300 transition-colors duration-300">History</span>
+              </Link>
+            )}
           </nav>
 
           {/* Quick Actions */}
@@ -364,8 +487,19 @@ function MobileMenu({ isOpen, onClose, children }) {
 
 // Enhanced Navigation Component with mobile support
 function EnhancedNavigation({ children, showMobileMenu = false, onMobileMenuToggle }) {
+  const { loggedIn, setLoggedIn } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const handleLogout = () => {
+    setLoggedIn(false);
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+  
   return (
     <nav className="relative z-10 w-full flex justify-between items-center p-4 lg:p-8">
+      {/* Single logo on the left */}
       <div className="flex items-center space-x-3 group cursor-pointer">
         <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse-glow group-hover:animate-bounce-gentle transition-all duration-300">
           <span className="text-xl lg:text-2xl animate-rotate-slow">🌙</span>
@@ -375,9 +509,43 @@ function EnhancedNavigation({ children, showMobileMenu = false, onMobileMenuTogg
         </span>
       </div>
       
-      {/* Desktop Navigation */}
+      {/* Conditional Login/Logout button for desktop */}
       <div className="hidden lg:flex items-center gap-4">
-        {children}
+        {loggedIn ? (
+          <div className="flex items-center gap-4">
+            {location.pathname !== '/dashboard' && (
+              <Link 
+                to="/dashboard" 
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+              >
+                Dashboard
+              </Link>
+            )}
+            {location.pathname !== '/history' && (
+              <Link 
+                to="/history" 
+                className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+              >
+                History
+              </Link>
+            )}
+            <button 
+              onClick={handleLogout}
+              className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          location.pathname !== '/login' && (
+            <Link 
+              to="/login" 
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+            >
+              Login / Sign Up
+            </Link>
+          )
+        )}
       </div>
       
       {/* Mobile Menu Button */}
@@ -401,23 +569,6 @@ function Landing() {
       <AnimatedBackground />
       <ParticleSystem />
       
-      {/* Enhanced Navigation */}
-      <EnhancedNavigation>
-        {loggedIn && (
-          <Link 
-            to="/dashboard" 
-            className="group px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
-          >
-            <span className="flex items-center gap-2">
-              Dashboard
-              <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </span>
-          </Link>
-        )}
-      </EnhancedNavigation>
-
       {/* Enhanced Hero Section */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] text-center px-4 lg:px-6">
         <div className="max-w-4xl mx-auto animate-fade-in">
@@ -425,7 +576,7 @@ function Landing() {
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent leading-tight animate-gradient">
               Discover Lunar
               <br />
-              <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl animate-float">Craters</span>
+              <span className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl animate-float bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 bg-clip-text text-transparent font-black">Crater Mysteries</span>
             </h1>
             <div className="w-24 sm:w-32 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full shadow-lg animate-scale-in"></div>
           </div>
@@ -744,6 +895,7 @@ function History() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState('');
   const [lightboxAlt, setLightboxAlt] = useState('');
+  const [compareMode, setCompareMode] = useState(null); // null, or index of item to compare
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -767,25 +919,25 @@ function History() {
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
+      <Lightbox open={lightboxOpen} onClose={() => setLightboxOpen(false)} src={lightboxSrc} alt={lightboxAlt} />
       <AnimatedBackground />
       <ParticleSystem />
       
-      {/* Enhanced Navigation */}
-      <EnhancedNavigation>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <Link 
-            to="/dashboard" 
-            className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-sm sm:text-base"
-          >
-            Dashboard
-          </Link>
-        </div>
-      </EnhancedNavigation>
-
       {/* Enhanced Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] px-4 sm:px-6">
         <div className="w-full max-w-6xl">
           <div className="text-center mb-8 sm:mb-12 animate-fade-in">
+            <div className="mb-4">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Dashboard
+              </button>
+            </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
               Detection History
             </h2>
@@ -847,90 +999,122 @@ function History() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 animate-fade-in">
+            <div className="space-y-6 sm:space-y-8 animate-fade-in">
               {history.map((item, idx) => (
-                <EnhancedCard 
-                  key={idx} 
-                  className="p-4 sm:p-6 group"
-                  style={{ animationDelay: `${idx * 0.1}s` }}
-                >
-                  <div className="text-center mb-4">
-                    <span className="text-xs sm:text-sm text-white/50 bg-white/10 px-2 sm:px-3 py-1 rounded-full">
-                      {new Date(item.createdAt).toLocaleString()}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                    <div className="space-y-2">
-                      <h4 className="text-base sm:text-lg font-semibold text-purple-300 text-center flex items-center justify-center gap-2">
-                        <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
-                        Original
-                      </h4>
-                      <div className="relative group">
-                        <img 
-                          src={`http://localhost:5000/uploads/${item.originalImage}`} 
-                          alt="Original lunar image" 
-                          className="w-full h-32 sm:h-48 object-cover rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
-                          onClick={() => { 
-                            setLightboxSrc(`http://localhost:5000/uploads/${item.originalImage}`); 
-                            setLightboxAlt('Original lunar image'); 
-                            setLightboxOpen(true); 
-                          }} 
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
-                          <span className="text-white text-xs sm:text-sm font-medium">Click to enlarge</span>
+                <div key={idx} className="w-full">
+                  <EnhancedCard 
+                    className="p-4 sm:p-6 group"
+                    style={{ animationDelay: `${idx * 0.1}s` }}
+                  >
+                    <div className="text-center mb-4">
+                      <span className="text-xs sm:text-sm text-white/50 bg-white/10 px-2 sm:px-3 py-1 rounded-full">
+                        {new Date(item.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="space-y-2">
+                        <h4 className="text-base sm:text-lg font-semibold text-purple-300 text-center flex items-center justify-center gap-2">
+                          <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
+                          Original
+                        </h4>
+                        <div className="relative group">
+                          <img 
+                            src={`http://localhost:5000/uploads/${item.originalImage}`} 
+                            alt="Original lunar image" 
+                            className="w-full h-32 sm:h-48 object-cover rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
+                            onClick={() => { 
+                              setLightboxSrc(`http://localhost:5000/uploads/${item.originalImage}`); 
+                              setLightboxAlt('Original lunar image'); 
+                              setLightboxOpen(true); 
+                            }} 
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
+                            <span className="text-white text-xs sm:text-sm font-medium">Click to enlarge</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="text-base sm:text-lg font-semibold text-green-300 text-center flex items-center justify-center gap-2">
+                          <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                          Predicted
+                        </h4>
+                        <div className="relative group">
+                          <img 
+                            src={`http://localhost:5000/uploads/${item.predictedImage}`} 
+                            alt="Predicted lunar image with craters" 
+                            className="w-full h-32 sm:h-48 object-cover rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
+                            onClick={() => { 
+                              setLightboxSrc(`http://localhost:5000/uploads/${item.predictedImage}`); 
+                              setLightboxAlt('Predicted lunar image with craters'); 
+                              setLightboxOpen(true); 
+                            }} 
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
+                            <span className="text-white text-xs sm:text-sm font-medium">Click to enlarge</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
-                      <h4 className="text-base sm:text-lg font-semibold text-green-300 text-center flex items-center justify-center gap-2">
-                        <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                        Predicted
-                      </h4>
-                      <div className="relative group">
-                        <img 
-                          src={`http://localhost:5000/uploads/${item.predictedImage}`} 
-                          alt="Predicted lunar image with craters" 
-                          className="w-full h-32 sm:h-48 object-cover rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
-                          onClick={() => { 
-                            setLightboxSrc(`http://localhost:5000/uploads/${item.predictedImage}`); 
-                            setLightboxAlt('Predicted lunar image with craters'); 
-                            setLightboxOpen(true); 
-                          }} 
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
-                          <span className="text-white text-xs sm:text-sm font-medium">Click to enlarge</span>
+                    {/* Enhanced metadata */}
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs sm:text-sm text-white/60">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>Processed {new Date(item.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span>AI Detection</span>
                         </div>
                       </div>
+                      
+                      {/* Compare View Button */}
+                      <div className="flex justify-center mt-3">
+                        <button
+                          onClick={() => setCompareMode(compareMode === idx ? null : idx)}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 text-sm font-medium ${
+                            compareMode === idx 
+                              ? 'bg-blue-500 text-white shadow-lg' 
+                              : 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300'
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2z" />
+                          </svg>
+                          {compareMode === idx ? 'Hide Comparison' : 'Compare View'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  </EnhancedCard>
                   
-                  {/* Enhanced metadata */}
-                  <div className="mt-4 pt-4 border-t border-white/10">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs sm:text-sm text-white/60">
-                      <div className="flex items-center gap-2">
-                        <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Processed {new Date(item.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>AI Detection</span>
-                      </div>
+                  {/* Inline Comparison View */}
+                  {compareMode === idx && (
+                    <div className="mt-4 animate-scale-in">
+                      <ImageComparison 
+                        originalUrl={`http://localhost:5000/uploads/${item.originalImage}`}
+                        predictedUrl={`http://localhost:5000/uploads/${item.predictedImage}`}
+                        onImageClick={(src, alt) => {
+                          setLightboxSrc(src);
+                          setLightboxAlt(alt);
+                          setLightboxOpen(true);
+                        }}
+                      />
                     </div>
-                  </div>
-                </EnhancedCard>
+                  )}
+                </div>
               ))}
             </div>
           )}
         </div>
       </div>
       
-      <Lightbox open={lightboxOpen} onClose={() => setLightboxOpen(false)} src={lightboxSrc} alt={lightboxAlt} />
     </div>
   );
 }
@@ -971,18 +1155,8 @@ function Dashboard() {
   const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [sampleImagesOpen, setSampleImagesOpen] = useState(false);
 
-  // Simulate app progress
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAppProgress(prev => {
-        if (prev >= 100) return 0;
-        return prev + Math.random() * 10;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-  
   // Initialize keyboard shortcuts
   useKeyboardShortcuts();
 
@@ -1018,6 +1192,8 @@ function Dashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('🚀 Detect Craters button clicked!');
+    
     setUploadError('');
     setLoading(true);
     setPredictedImage(null);
@@ -1048,12 +1224,10 @@ function Dashboard() {
       setUploadProgress(100);
       setProcessingStage('Complete!');
       
-      console.log('Frontend received response:', res.data);
+      console.log('✅ Detection completed successfully!');
       setPredictedImage(res.data.image.predictedImage);
       setPredictedImageUrl(`http://localhost:5000/uploads/${res.data.image.predictedImage}`);
       setOriginalImageUrl(`http://localhost:5000/uploads/${res.data.image.originalImage}`);
-      console.log('Set predicted image URL:', `http://localhost:5000/uploads/${res.data.image.predictedImage}`);
-      console.log('Set original image URL:', `http://localhost:5000/uploads/${res.data.image.originalImage}`);
       setHistory([res.data.image, ...history]);
       setImage(null);
       showToast('Image uploaded successfully!', 'success');
@@ -1065,6 +1239,7 @@ function Dashboard() {
       }, 2000);
       
     } catch (err) {
+      console.error('❌ Error during image upload:', err);
       clearInterval(progressInterval);
       setUploadProgress(0);
       setProcessingStage('');
@@ -1083,39 +1258,10 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
+      <Lightbox open={lightboxOpen} onClose={() => setLightboxOpen(false)} src={lightboxSrc} alt={lightboxAlt} />
       <AnimatedBackground />
       <ParticleSystem />
       
-      {/* Enhanced Navigation */}
-      <EnhancedNavigation>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <Link 
-            to="/history" 
-            className="group px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-sm sm:text-base"
-          >
-            <span className="flex items-center gap-2">
-              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              History
-            </span>
-          </Link>
-          
-          <NotificationBell 
-            notifications={notifications}
-            onToggle={() => setNotificationsOpen(!notificationsOpen)}
-            isOpen={notificationsOpen}
-          />
-          
-          <button
-            onClick={handleLogout}
-            className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-sm sm:text-base"
-          >
-            Logout
-          </button>
-        </div>
-      </EnhancedNavigation>
-
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] px-4 sm:px-6">
         <div className="w-full max-w-6xl">
@@ -1274,6 +1420,24 @@ function Dashboard() {
             </EnhancedCard>
           )}
 
+          {/* View History Button */}
+          {history.length > 0 && !searchQuery && (
+            <div className="text-center mb-8 animate-fade-in">
+              <Link 
+                to="/history"
+                className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-2xl shadow-lg hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>View Detection History ({history.length})</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+            </div>
+          )}
+
           {/* Enhanced Loading State with Progress */}
           {loading && (
             <div className="mb-8 sm:mb-12 text-center animate-fade-in">
@@ -1342,22 +1506,12 @@ function Dashboard() {
         </div>
       </div>
       
-      <Lightbox open={lightboxOpen} onClose={() => setLightboxOpen(false)} src={lightboxSrc} alt={lightboxAlt} />
 
               {/* Enhanced UI Components - Complete UI Enhancement Suite */}
         <FloatingHelp isOpen={helpOpen} onToggle={() => setHelpOpen(!helpOpen)} />
         <QuickActionsPanel isOpen={quickActionsOpen} onToggle={() => setQuickActionsOpen(!quickActionsOpen)} />
         <AccessibilityPanel isOpen={accessibilityOpen} onToggle={() => setAccessibilityOpen(!accessibilityOpen)} />
-        
-        {/* UI Enhancement Status Indicator */}
-        <div className="fixed top-20 right-6 z-40">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full shadow-lg animate-pulse-glow">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">✨</span>
-              <span className="text-sm font-semibold">UI Enhanced</span>
-            </div>
-          </div>
-        </div>
+        <SampleImagesModal isOpen={sampleImagesOpen} onClose={() => setSampleImagesOpen(false)} />
         
         {/* Enhanced Floating Action Button with integrated actions */}
         <FloatingActionButton 
@@ -1383,9 +1537,9 @@ function Dashboard() {
               color: "bg-purple-500 hover:bg-purple-600 shadow-lg hover:shadow-xl"
             },
             {
-              icon: "📊",
-              label: "Analytics",
-              onClick: () => setShowStats(!showStats),
+              icon: "�️",
+              label: "Sample Images",
+              onClick: () => setSampleImagesOpen(true),
               color: "bg-orange-500 hover:bg-orange-600 shadow-lg hover:shadow-xl"
             },
             {
@@ -1402,15 +1556,17 @@ function Dashboard() {
           {/* FAB Menu Items */}
 
 
-      {/* App Progress Indicator */}
-      <div className="fixed top-0 left-0 w-full h-1 bg-gray-800 z-50">
-        <div 
-          className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 transition-all duration-1000 ease-out"
-          style={{ width: `${appProgress}%` }}
-        >
-          <div className="h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+      {/* App Progress Indicator - Only show during actual processing */}
+      {loading && (
+        <div className="fixed top-0 left-0 w-full h-1 bg-gray-800 z-50">
+          <div 
+            className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 transition-all duration-1000 ease-out"
+            style={{ width: `${uploadProgress}%` }}
+          >
+            <div className="h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -1557,12 +1713,46 @@ function StatisticsDashboard({ history, className = "" }) {
 // Enhanced Image Comparison Component
 function ImageComparison({ originalUrl, predictedUrl, onImageClick }) {
   const [activeTab, setActiveTab] = useState('side-by-side');
+  const [sliderPosition, setSliderPosition] = useState(50);
+  const [isDragging, setIsDragging] = useState(false);
+  const sliderRef = useRef(null);
   
   const tabs = [
     { id: 'side-by-side', label: 'Side by Side', icon: '🔄' },
     { id: 'overlay', label: 'Overlay', icon: '🔍' },
     { id: 'slider', label: 'Slider', icon: '📱' }
   ];
+
+  // Handle slider drag functionality
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    handleMouseMove(e);
+  };
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isDragging && e.type !== 'mousedown') return;
+    if (!sliderRef.current) return;
+    
+    const rect = sliderRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    setSliderPosition(percentage);
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (
     <EnhancedCard className="p-6 sm:p-8">
@@ -1604,7 +1794,10 @@ function ImageComparison({ originalUrl, predictedUrl, onImageClick }) {
                 className="w-full h-64 sm:h-80 object-cover cursor-pointer" 
                 onClick={() => onImageClick(originalUrl, 'Original lunar image')}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+              <div 
+                className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 cursor-pointer"
+                onClick={() => onImageClick(originalUrl, 'Original lunar image')}
+              >
                 <span className="text-white font-medium text-sm sm:text-base">Click to enlarge</span>
               </div>
             </div>
@@ -1619,7 +1812,10 @@ function ImageComparison({ originalUrl, predictedUrl, onImageClick }) {
                 className="w-full h-64 sm:h-80 object-cover cursor-pointer" 
                 onClick={() => onImageClick(predictedUrl, 'Predicted lunar image with craters')}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+              <div 
+                className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 cursor-pointer"
+                onClick={() => onImageClick(predictedUrl, 'Predicted lunar image with craters')}
+              >
                 <span className="text-white font-medium text-sm sm:text-base">Click to enlarge</span>
               </div>
             </div>
@@ -1629,7 +1825,8 @@ function ImageComparison({ originalUrl, predictedUrl, onImageClick }) {
 
       {/* Overlay View */}
       {activeTab === 'overlay' && (
-        <div className="relative w-full h-80 sm:h-96 rounded-3xl overflow-hidden shadow-2xl">
+        <div className="relative w-full h-80 sm:h-96 rounded-3xl overflow-hidden shadow-2xl group cursor-pointer"
+             onClick={() => onImageClick(predictedUrl, 'Overlay comparison view')}>
           <img 
             src={originalUrl} 
             alt="Original lunar image" 
@@ -1638,31 +1835,44 @@ function ImageComparison({ originalUrl, predictedUrl, onImageClick }) {
           <img 
             src={predictedUrl}
             alt="Predicted lunar image with craters" 
-            className="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-70 hover:opacity-100 transition-opacity duration-500" 
+            className="absolute inset-0 w-full h-full object-cover opacity-70 hover:opacity-90 transition-opacity duration-500" 
+            style={{ mixBlendMode: 'multiply' }}
           />
           <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md px-3 py-2 rounded-xl text-white text-sm">
             <span className="mr-2">🔍</span>
-            Hover to see overlay effect
+            Hover to adjust overlay • Click to enlarge
           </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </div>
       )}
 
       {/* Slider View */}
       {activeTab === 'slider' && (
-        <div className="relative w-full h-80 sm:h-96 rounded-3xl overflow-hidden shadow-2xl">
+        <div 
+          ref={sliderRef}
+          className="relative w-full h-80 sm:h-96 rounded-3xl overflow-hidden shadow-2xl cursor-pointer select-none"
+          onMouseDown={handleMouseDown}
+          onClick={() => onImageClick(originalUrl, 'Slider comparison view')}
+        >
           <img 
             src={originalUrl} 
             alt="Original lunar image" 
             className="absolute inset-0 w-full h-full object-cover" 
           />
-          <div className="absolute inset-0 w-1/2 overflow-hidden">
+          <div 
+            className="absolute inset-0 overflow-hidden transition-all duration-200"
+            style={{ width: `${sliderPosition}%` }}
+          >
             <img 
               src={predictedUrl}
               alt="Predicted lunar image with craters" 
-              className="absolute inset-0 w-full h-full object-cover" 
+              className="absolute inset-0 w-full h-full object-cover"
             />
           </div>
-          <div className="absolute inset-y-0 left-1/2 w-1 bg-white shadow-lg transform -translate-x-1/2 cursor-ew-resize">
+          <div 
+            className="absolute inset-y-0 w-1 bg-white shadow-lg cursor-ew-resize z-10 transition-all duration-200"
+            style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
+          >
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center">
               <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
@@ -1671,7 +1881,10 @@ function ImageComparison({ originalUrl, predictedUrl, onImageClick }) {
           </div>
           <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md px-3 py-2 rounded-xl text-white text-sm">
             <span className="mr-2">📱</span>
-            Drag slider to compare
+            Drag slider to compare • Click to enlarge
+          </div>
+          <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md px-3 py-2 rounded-xl text-white text-sm">
+            Position: {Math.round(sliderPosition)}%
           </div>
         </div>
       )}
@@ -2269,7 +2482,15 @@ function SystemStatus({ className = "" }) {
 function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { loggedIn } = useAuth();
+  const { loggedIn, setLoggedIn } = useAuth();
+  const navigate = useNavigate();
+
+  const handleMobileLogout = () => {
+    setLoggedIn(false);
+    localStorage.removeItem('token');
+    setIsMobileMenuOpen(false);
+    navigate('/');
+  };
 
   const breadcrumbs = [
     { label: 'Home', href: '/' },
@@ -2294,97 +2515,51 @@ function App() {
                 Home
               </Link>
             </li>
-            <li>
-              <Link to="/dashboard" className="block px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link to="/history" className="block px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
-                History
-              </Link>
-            </li>
-            <li>
-              <Link to="/login" className="block px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
-                Login
-              </Link>
-            </li>
-            <li>
-              <Link to="/signup" className="block px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
-                Sign Up
-              </Link>
-            </li>
+            {loggedIn && (
+              <>
+                <li>
+                  <Link to="/dashboard" className="block px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
+                    Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/history" className="block px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
+                    History
+                  </Link>
+                </li>
+                <li>
+                  <button 
+                    onClick={handleMobileLogout}
+                    className="block w-full text-left px-4 py-2 rounded-lg hover:bg-white/20 transition-colors text-red-400"
+                  >
+                    Logout
+                  </button>
+                </li>
+              </>
+            )}
+            {!loggedIn && (
+              <>
+                <li>
+                  <Link to="/login" className="block px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
+                    Login
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/signup" className="block px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
+                    Sign Up
+                  </Link>
+                </li>
+              </>
+            )}
           </ul>
         </MobileMenu>
+        
+        {/* Simplified Navigation - removed all duplicate elements */}
         <EnhancedNavigation
           showMobileMenu={isMobileMenuOpen}
           onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          <BreadcrumbNav items={breadcrumbs} />
-          <Link 
-            to="/" 
-            className="group px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
-          >
-            <span className="flex items-center gap-2">
-              Home
-              <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </span>
-          </Link>
-          {loggedIn && (
-            <>
-              <Link 
-                to="/dashboard" 
-                className="group px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
-              >
-                <span className="flex items-center gap-2">
-                  Dashboard
-                  <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </span>
-              </Link>
-              <Link 
-                to="/history" 
-                className="group px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
-              >
-                <span className="flex items-center gap-2">
-                  History
-                  <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </span>
-              </Link>
-            </>
-          )}
-          {!loggedIn && (
-            <>
-              <Link 
-                to="/login" 
-                className="group px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
-              >
-                <span className="flex items-center gap-2">
-                  Login
-                  <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </span>
-              </Link>
-              <Link 
-                to="/signup" 
-                className="group px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
-              >
-                <span className="flex items-center gap-2">
-                  Sign Up
-                  <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </span>
-              </Link>
-            </>
-          )}
-        </EnhancedNavigation>
+        />
+        
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
