@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: cratervision-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    rootDir: backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+
+  - type: web
+    name: cratervision-yolo-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python yolo_api.py
+    envVars:
+      - key: PORT
+        value: 10001
+      - key: FLASK_ENV
+        value: production

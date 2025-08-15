@@ -59,7 +59,7 @@
    - **Environment**: `Node`
    - **Root Directory**: `backend`
    - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
+   - **Start Command**: `npm start` (NOT npm run dev)
    - **Plan**: Free
 3. **Environment Variables**:
    ```
@@ -77,11 +77,11 @@
 1. **Create Vercel Account**: [vercel.com](https://vercel.com)
 2. **New Project** → Import from GitHub
 3. **Configuration**:
-   - **Framework Preset**: Other
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-   - **Install Command**: `npm install`
+   - **Framework Preset**: Vite
+   - **Root Directory**: `frontend` (IMPORTANT: Set this!)
+   - **Build Command**: `npm run build` (auto-detected)
+   - **Output Directory**: `dist` (auto-detected)
+   - **Install Command**: `npm install` (auto-detected)
 4. **Environment Variables**:
    ```
    VITE_API_URL=https://cratervision-backend.onrender.com
@@ -159,6 +159,34 @@ const PYTHON_API_URL = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:
 3. **Database connection**: Verify MongoDB Atlas IP allowlist
 4. **Email not sending**: Check Gmail app password
 5. **Build failures**: Check logs in Render/Vercel dashboards
+
+### Render Deployment Issues
+**Error: "nodemon: not found"**
+- **Problem**: Render is trying to run `npm run dev` instead of `npm start`
+- **Solution**: In Render dashboard:
+  1. Go to your backend service settings
+  2. Set **Start Command** to: `npm start` (not `npm run dev`)
+  3. Ensure **Build Command** is: `npm install`
+  4. Redeploy the service
+
+**Error: "Module not found"**
+- **Problem**: Dependencies not installed properly
+- **Solution**: Check that all dependencies are in `dependencies` (not `devDependencies`)
+
+### Vercel Deployment Issues
+**Error: "Command 'cd frontend && npm install' exited with 1"**
+- **Problem**: Incorrect build configuration for monorepo
+- **Solution**: In Vercel dashboard:
+  1. Go to Project Settings
+  2. Set **Root Directory** to: `frontend`
+  3. Set **Framework Preset** to: `Vite`
+  4. **Build Command**: `npm run build` (should auto-detect)
+  5. **Output Directory**: `dist` (should auto-detect)
+  6. Redeploy
+
+**Error: "Build failed" or "Module not found"**
+- **Problem**: Wrong root directory or missing dependencies
+- **Solution**: Ensure Root Directory is set to `frontend` folder
 
 ### Debug Commands
 ```bash
