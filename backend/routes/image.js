@@ -101,10 +101,13 @@ router.post('/upload', auth, upload.single('image'), async (req, res) => {
     
     try {
       console.log('🔄 Sending to Python API...');
+      const pythonApiUrl = process.env.PYTHON_API_URL || 'http://localhost:5001';
+      console.log('🐍 Python API URL:', pythonApiUrl);
+      
       const formData = new FormData();
       formData.append('image', fs.createReadStream(resizedPath));
       
-      const response = await axios.post('http://localhost:5001/predict', formData, {
+      const response = await axios.post(`${pythonApiUrl}/predict`, formData, {
         headers: formData.getHeaders(),
         responseType: 'arraybuffer',
         timeout: 30000 // 30 second timeout
