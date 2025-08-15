@@ -45,7 +45,8 @@ const upload = multer({
 router.post('/upload', auth, upload.single('image'), async (req, res) => {
   try {
     console.log('📤 Upload request received');
-    console.log('📁 File info:', req.file ? {
+    console.log('� User ID:', req.userId);
+    console.log('�📁 File info:', req.file ? {
       filename: req.file.filename,
       size: req.file.size,
       mimetype: req.file.mimetype

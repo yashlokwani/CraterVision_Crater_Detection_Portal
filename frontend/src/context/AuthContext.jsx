@@ -66,7 +66,7 @@ export function AuthProvider({ children }) {
     delete api.defaults.headers.common['Authorization'];
     setLoggedIn(false);
     setUser(null);
-    console.log('👋 User logged out');
+    console.log('👋 User logged out successfully');
   };
   
   useEffect(() => {

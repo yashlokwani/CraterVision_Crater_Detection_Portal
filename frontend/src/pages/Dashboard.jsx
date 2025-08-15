@@ -277,7 +277,7 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 pt-16">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 pt-16">
       <Lightbox 
         open={lightboxOpen} 
         onClose={() => setLightboxOpen(false)} 
@@ -625,20 +625,20 @@ function Dashboard() {
       {helpModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setHelpModalOpen(false)}></div>
-          <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-3xl shadow-2xl border border-white/20 max-w-2xl w-full animate-scale-in">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  About CraterVision
-                </h3>
-                <button 
-                  onClick={() => setHelpModalOpen(false)}
-                  className="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-              
+          <div className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-3xl shadow-2xl border border-white/20 max-w-2xl w-full max-h-[90vh] overflow-hidden animate-scale-in">
+            <div className="flex justify-between items-center p-6 pb-4 border-b border-white/10">
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                About CraterVision
+              </h3>
+              <button 
+                onClick={() => setHelpModalOpen(false)}
+                className="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto max-h-[calc(90vh-100px)] p-6 pt-4">
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-2xl p-6 border border-blue-500/30">
                   <h4 className="font-semibold text-blue-300 mb-3 text-lg">🌙 What is CraterVision?</h4>
@@ -697,6 +697,26 @@ function Dashboard() {
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 bg-green-400 rounded-full"></span>
                       <span>User-friendly interface</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-2xl p-6 border border-orange-500/30">
+                  <h4 className="font-semibold text-orange-300 mb-3 text-lg">👥 Creators</h4>
+                  <div className="space-y-3 text-white/80 text-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-xs font-bold">YL</div>
+                      <div>
+                        <p className="font-semibold text-orange-300">Yash Lokwani</p>
+                        <p className="text-white/60 text-xs">Developer</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-xs font-bold">SS</div>
+                      <div>
+                        <p className="font-semibold text-orange-300">Sanskriti Singh</p>
+                        <p className="text-white/60 text-xs">Developer</p>
+                      </div>
                     </div>
                   </div>
                 </div>
