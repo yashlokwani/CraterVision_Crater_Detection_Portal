@@ -15,7 +15,6 @@ function History() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState('');
   const [lightboxAlt, setLightboxAlt] = useState('');
-  const [compareMode, setCompareMode] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -143,19 +142,24 @@ function History() {
                           <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
                           Original
                         </h4>
-                        <div className="relative group">
+                        <div 
+                          className="relative group cursor-pointer"
+                          onClick={(e) => { 
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Container clicked for original image:', item.originalImage);
+                            setLightboxSrc(`http://localhost:5000/uploads/${item.originalImage}`); 
+                            setLightboxAlt('Original lunar image'); 
+                            setLightboxOpen(true);
+                          }}
+                        >
                           <img 
                             src={`http://localhost:5000/uploads/${item.originalImage}`} 
                             alt="Original lunar image" 
-                            className="w-full h-32 sm:h-48 object-cover rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
-                            onClick={() => { 
-                              setLightboxSrc(`http://localhost:5000/uploads/${item.originalImage}`); 
-                              setLightboxAlt('Original lunar image'); 
-                              setLightboxOpen(true); 
-                            }} 
+                            className="w-full h-32 sm:h-48 object-cover rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl pointer-events-none" 
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
-                            <span className="text-white text-xs sm:text-sm font-medium">Click to enlarge</span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2 pointer-events-none">
+                            <span className="text-white text-xs sm:text-sm font-medium pointer-events-none">Click to enlarge</span>
                           </div>
                         </div>
                       </div>
@@ -165,19 +169,24 @@ function History() {
                           <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                           Predicted
                         </h4>
-                        <div className="relative group">
+                        <div 
+                          className="relative group cursor-pointer"
+                          onClick={(e) => { 
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Container clicked for predicted image:', item.predictedImage);
+                            setLightboxSrc(`http://localhost:5000/uploads/${item.predictedImage}`); 
+                            setLightboxAlt('Predicted lunar image with craters'); 
+                            setLightboxOpen(true);
+                          }}
+                        >
                           <img 
                             src={`http://localhost:5000/uploads/${item.predictedImage}`} 
                             alt="Predicted lunar image with craters" 
-                            className="w-full h-32 sm:h-48 object-cover rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl" 
-                            onClick={() => { 
-                              setLightboxSrc(`http://localhost:5000/uploads/${item.predictedImage}`); 
-                              setLightboxAlt('Predicted lunar image with craters'); 
-                              setLightboxOpen(true); 
-                            }} 
+                            className="w-full h-32 sm:h-48 object-cover rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl pointer-events-none" 
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2">
-                            <span className="text-white text-xs sm:text-sm font-medium">Click to enlarge</span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-2 pointer-events-none">
+                            <span className="text-white text-xs sm:text-sm font-medium pointer-events-none">Click to enlarge</span>
                           </div>
                         </div>
                       </div>
@@ -200,60 +209,9 @@ function History() {
                         </div>
                       </div>
                       
-                      {/* Action Buttons */}
-                      <div className="flex justify-center mt-4 gap-3">
-                        <button
-                          onClick={() => setCompareMode(compareMode === idx ? null : idx)}
-                          className={`px-4 py-2 ${compareMode === idx ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gradient-to-r from-blue-500 to-cyan-500'} text-white text-sm rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105`}
-                        >
-                          {compareMode === idx ? '✓ Comparing' : '🔍 Compare View'}
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                            const link = document.createElement('a');
-                            link.href = `http://localhost:5000/uploads/${item.predictedImage}`;
-                            link.download = item.predictedImage;
-                            link.click();
-                          }}
-                          className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-                        >
-                          💾 Download
-                        </button>
-                      </div>
+
                     </div>
-                    
-                    {/* Compare Mode */}
-                    {compareMode === idx && (
-                      <div className="mt-6 p-4 bg-white/5 rounded-2xl border border-white/10 animate-slide-down">
-                        <h5 className="text-center text-white font-medium mb-4">Side-by-Side Comparison</h5>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <p className="text-purple-300 text-sm font-medium text-center">Original Image</p>
-                            <img 
-                              src={`http://localhost:5000/uploads/${item.originalImage}`} 
-                              alt="Original lunar image" 
-                              className="w-full h-40 object-cover rounded-xl border-2 border-purple-400/50" 
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <p className="text-green-300 text-sm font-medium text-center">Predicted Image</p>
-                            <img 
-                              src={`http://localhost:5000/uploads/${item.predictedImage}`} 
-                              alt="Predicted lunar image with craters" 
-                              className="w-full h-40 object-cover rounded-xl border-2 border-green-400/50" 
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="mt-4 p-3 bg-blue-500/20 rounded-xl border border-blue-500/30">
-                          <p className="text-blue-300 text-sm">
-                            <strong>Analysis:</strong> The AI model has successfully detected and highlighted crater formations in the lunar surface image. 
-                            Red boxes indicate identified crater regions with high confidence scores.
-                          </p>
-                        </div>
-                      </div>
-                    )}
+
                   </EnhancedCard>
                 </div>
               ))}

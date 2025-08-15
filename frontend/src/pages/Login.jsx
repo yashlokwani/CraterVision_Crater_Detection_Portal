@@ -11,7 +11,7 @@ function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { loggedIn, setLoggedIn } = useAuth();
+  const { loggedIn, login } = useAuth();
   const navigate = useNavigate();
 
   if (loggedIn) return <Navigate to="/dashboard" />;
@@ -22,8 +22,7 @@ function Login() {
     setLoading(true);
     try {
       const res = await api.post('/api/auth/login', { email, password });
-      localStorage.setItem('token', res.data.token);
-      setLoggedIn(true);
+      login(res.data.token, res.data.user);
       setTimeout(() => navigate('/dashboard'), 800);
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed.');
@@ -33,9 +32,21 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
-      <AnimatedBackground />
-      <ParticleSystem />
+    <>
+      {/* Home Button - Fixed at top-right of viewport */}
+      <Link 
+        to="/" 
+        className="fixed top-4 right-4 z-50 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 text-sm lg:text-base"
+      >
+        <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span className="hidden sm:inline">Home</span>
+      </Link>
+      
+      <div className="min-h-screen w-full flex items-start justify-center pt-8 sm:pt-12 p-4 sm:p-6 relative overflow-hidden">
+        <AnimatedBackground />
+        <ParticleSystem />
       
       <div className="relative z-10 w-full max-w-md animate-fade-in">
         <EnhancedCard className="p-6 sm:p-8">
@@ -126,6 +137,7 @@ function Login() {
         </EnhancedCard>
       </div>
     </div>
+    </>
   );
 }
 

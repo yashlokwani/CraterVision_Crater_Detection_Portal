@@ -11,6 +11,7 @@ import ProgressBar from '../components/ui/ProgressBar';
 import SystemHealthMonitor from '../components/features/SystemHealthMonitor';
 import SampleImagesModal from '../components/features/SampleImagesModal';
 import FloatingActionButton from '../components/ui/FloatingActionButton';
+import APIDebugger from '../components/features/APIDebugger';
 
 // Search Bar Component
 function SearchBar({ onSearch, placeholder = "Search lunar images...", className = "" }) {
@@ -152,6 +153,10 @@ function StatisticsDashboard({ history, className = "" }) {
 
 function Dashboard() {
   const navigate = useNavigate();
+  const { loggedIn } = useAuth();
+  const { showToast } = useToast();
+  
+  // All state hooks must come before any early returns
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -159,8 +164,6 @@ function Dashboard() {
   const [history, setHistory] = useState([]);
   const [uploadError, setUploadError] = useState('');
   const [originalImageUrl, setOriginalImageUrl] = useState(null);
-  const { loggedIn } = useAuth();
-  const { showToast } = useToast();
   const [predictedImageUrl, setPredictedImageUrl] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState('');
@@ -185,9 +188,7 @@ function Dashboard() {
     uptime: '24h 15m'
   });
 
-  if (!loggedIn) return <Navigate to="/login" />;
-
-  // Fetch history on mount
+  // All useEffect hooks must also come before early returns
   useEffect(() => {
     const fetchHistory = async () => {
       try {
@@ -199,6 +200,9 @@ function Dashboard() {
     };
     fetchHistory();
   }, []);
+
+  // Early return must come AFTER all hooks
+  if (!loggedIn) return <Navigate to="/login" />;
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -273,7 +277,7 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 pt-16">
       <Lightbox 
         open={lightboxOpen} 
         onClose={() => setLightboxOpen(false)} 
@@ -374,24 +378,6 @@ function Dashboard() {
             </form>
           </EnhancedCard>
 
-
-          {/* View Detection History Button (moved up) */}
-          {history.length > 0 && !searchQuery && (
-            <div className="text-center mt-8 animate-fade-in">
-              <Link 
-                to="/history"
-                className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-2xl shadow-lg hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 hover:-translate-y-1"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>View Detection History ({history.length})</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </Link>
-            </div>
-          )}
 
           {/* Error Display */}
           {uploadError && (
@@ -502,16 +488,36 @@ function Dashboard() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <img 
-                        src={`http://localhost:5000/uploads/${item.originalImage}`} 
-                        alt="Original" 
-                        className="w-16 h-16 object-cover rounded-xl"
-                      />
-                      <img 
-                        src={`http://localhost:5000/uploads/${item.predictedImage}`} 
-                        alt="Predicted" 
-                        className="w-16 h-16 object-cover rounded-xl"
-                      />
+                      <div className="relative group">
+                        <img 
+                          src={`http://localhost:5000/uploads/${item.originalImage}`} 
+                          alt="Original" 
+                          className="w-16 h-16 object-cover rounded-xl cursor-pointer hover:scale-105 transition-transform duration-300 hover:opacity-80"
+                          onClick={() => {
+                            setLightboxSrc(`http://localhost:5000/uploads/${item.originalImage}`);
+                            setLightboxAlt(`Original image - ${item.originalImage}`);
+                            setLightboxOpen(true);
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          <span className="text-white text-xs">🔍</span>
+                        </div>
+                      </div>
+                      <div className="relative group">
+                        <img 
+                          src={`http://localhost:5000/uploads/${item.predictedImage}`} 
+                          alt="Predicted" 
+                          className="w-16 h-16 object-cover rounded-xl cursor-pointer hover:scale-105 transition-transform duration-300 hover:opacity-80"
+                          onClick={() => {
+                            setLightboxSrc(`http://localhost:5000/uploads/${item.predictedImage}`);
+                            setLightboxAlt(`Predicted image with craters - ${item.predictedImage}`);
+                            setLightboxOpen(true);
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                          <span className="text-white text-xs">🔍</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -961,6 +967,8 @@ function Dashboard() {
         src={lightboxSrc} 
         alt={lightboxAlt} 
       />
+      
+      <APIDebugger />
     </div>
   );
 }

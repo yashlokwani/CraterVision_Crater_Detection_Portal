@@ -5,20 +5,18 @@ import MobileMenu from './MobileMenu';
 
 // Enhanced Navigation Component with mobile support
 function Navigation() {
-  const { loggedIn, setLoggedIn } = useAuth();
+  const { loggedIn, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const handleLogout = () => {
-    setLoggedIn(false);
-    localStorage.removeItem('token');
+    logout();
     navigate('/');
   };
 
   const handleMobileLogout = () => {
-    setLoggedIn(false);
-    localStorage.removeItem('token');
+    logout();
     setIsMobileMenuOpen(false);
     navigate('/');
   };

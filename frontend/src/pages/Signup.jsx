@@ -12,7 +12,7 @@ function Signup() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { loggedIn, setLoggedIn } = useAuth();
+  const { loggedIn, login } = useAuth();
   const navigate = useNavigate();
 
   if (loggedIn) return <Navigate to="/dashboard" />;
@@ -21,12 +21,32 @@ function Signup() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
+    // Frontend validation
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setError('All fields are required.');
+      setLoading(false);
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const res = await api.post('/api/auth/signup', { name, email, password });
-      localStorage.setItem('token', res.data.token);
-      setLoggedIn(true);
+      console.log('Sending signup request:', { name: name.trim(), email: email.trim(), password: password.length + ' chars' });
+      const res = await api.post('/api/auth/signup', { 
+        name: name.trim(), 
+        email: email.trim(), 
+        password: password 
+      });
+      console.log('Signup response:', res.data);
+      login(res.data.token, res.data.user);
       setTimeout(() => navigate('/dashboard'), 800);
     } catch (err) {
+      console.error('Signup error:', err.response?.data || err.message);
       setError(err.response?.data?.message || 'Signup failed.');
     } finally {
       setLoading(false);
@@ -34,9 +54,31 @@ function Signup() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 relative overflow-hidden">
-      <AnimatedBackground />
-      <ParticleSystem />
+    <>
+      {/* Home Button - Fixed at top-right of viewport */}
+      <Link 
+        to="/" 
+        className="fixed top-4 right-4 z-50 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-xl shadow-2xl hover:shadow-glow-lg transition-all duration-300 transform hover:scale-105 text-sm lg:text-base"
+      >
+        <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        <span className="hidden sm:inline">Home</span>
+      </Link>
+
+      {/* Brand Name/Logo - Top Left */}
+      <div className="fixed top-4 left-4 lg:top-8 lg:left-8 z-50 flex items-center space-x-3 group cursor-pointer">
+        <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl animate-pulse-glow group-hover:animate-bounce-gentle transition-all duration-300">
+          <span className="text-xl lg:text-2xl animate-rotate-slow">🌙</span>
+        </div>
+        <span className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient">
+          CraterVision
+        </span>
+      </div>
+      
+      <div className="min-h-screen w-full flex items-start justify-center pt-16 sm:pt-20 p-4 sm:p-6 relative overflow-hidden">
+        <AnimatedBackground />
+        <ParticleSystem />
       
       <div className="relative z-10 w-full max-w-md animate-fade-in">
         <EnhancedCard className="p-6 sm:p-8">
@@ -140,6 +182,7 @@ function Signup() {
         </EnhancedCard>
       </div>
     </div>
+    </>
   );
 }
 
