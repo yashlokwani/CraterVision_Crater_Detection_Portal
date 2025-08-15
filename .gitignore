@@ -18,6 +18,9 @@ frontend/build/
 .env.test.local
 .env.production.local
 
+# Keep the example file for reference
+!.env.example
+
 # Logs
 logs
 *.log

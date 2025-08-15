@@ -1,4 +1,5 @@
 from flask import Flask, request, send_file
+from flask_cors import CORS
 import torch
 from PIL import Image
 import io
@@ -8,9 +9,15 @@ import numpy as np
 from ultralytics import YOLO
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # Load your YOLO model
 model = YOLO('best.pt')
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for Render"""
+    return {'status': 'healthy', 'service': 'YOLO API', 'model_loaded': True}, 200
 
 def draw_label_with_bg(img, text, position):
     """Draw text with background for better visibility"""
@@ -88,4 +95,5 @@ def predict():
     return send_file(buf, mimetype='image/jpeg')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001) 
+    port = int(os.environ.get('PORT', 5001))
+    app.run(host='0.0.0.0', port=port, debug=False) 
