@@ -47,8 +47,8 @@ function History() {
       <AnimatedBackground />
       <ParticleSystem />
       
-      {/* Enhanced Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-[80vh] px-4 sm:px-6">
+      {/* Enhanced Content - Reduced z-index to not interfere with Navigation */}
+      <div className="relative z-0 flex flex-col items-center justify-center min-h-[80vh] px-4 sm:px-6 pt-20">
         <div className="w-full max-w-6xl">
           <div className="text-center mb-8 sm:mb-12 animate-fade-in">
             <div className="mb-4">

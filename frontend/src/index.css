@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom Text Selection Colors */
+::selection {
+  background: #a855f7 !important; /* Purple color with !important */
+  color: white !important;
+}
+
+::-moz-selection {
+  background: #a855f7 !important; /* Purple color for Firefox with !important */
+  color: white !important;
+}
+
+/* Additional selection rules for different elements */
+*::selection {
+  background: #a855f7 !important;
+  color: white !important;
+}
+
+*::-moz-selection {
+  background: #a855f7 !important;
+  color: white !important;
+}
+
+/* Override any Tailwind selection styles */
+html ::selection {
+  background: #a855f7 !important;
+  color: white !important;
+}
+
+html ::-moz-selection {
+  background: #a855f7 !important;
+  color: white !important;
+}
+
 /* Custom animations */
 @keyframes blob {
   0% {

@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 // Enhanced Mobile Menu Component
 function MobileMenu({ isOpen, onClose, onLogout }) {
   const location = useLocation();
-  const { loggedIn } = useAuth();
+  const { loggedIn, user } = useAuth();
   
   if (!isOpen) return null;
   
@@ -147,11 +147,11 @@ function MobileMenu({ isOpen, onClose, onLogout }) {
             <div className="p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl border border-purple-500/30">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold">U</span>
+                  <span className="text-white font-bold">{user?.name?.charAt(0).toUpperCase() || 'U'}</span>
                 </div>
                 <div>
-                  <p className="text-white font-medium">User</p>
-                  <p className="text-white/60 text-sm">Logged In</p>
+                  <p className="text-white font-medium">{user?.name || 'User'}</p>
+                  <p className="text-white/60 text-sm">{user?.email || 'user@example.com'}</p>
                 </div>
               </div>
               <button
