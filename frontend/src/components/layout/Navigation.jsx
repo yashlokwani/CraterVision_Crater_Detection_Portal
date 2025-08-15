@@ -9,10 +9,17 @@ function Navigation() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleMobileLogout = () => {
     logout();
     setIsMobileMenuOpen(false);
+    navigate('/');
+  };
+
+  const handleDropdownLogout = () => {
+    logout();
+    setProfileOpen(false);
     navigate('/');
   };
   
@@ -56,33 +63,50 @@ function Navigation() {
                 </Link>
               )}
               
-              {/* Profile Info */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-2 bg-white/10 backdrop-blur-lg rounded-xl border border-white/20">
-                  <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : '👤'}
-                  </div>
-                  <div className="hidden sm:block">
-                    <p className="text-white font-medium text-sm">{user?.name || 'User'}</p>
-                  </div>
-                </div>
-                
-                {/* Logout Button */}
+              {/* Profile Dropdown - Hybrid Positioning */}
+              <div className="relative">
                 <button
-                  onClick={() => {
-                    console.log('� Logout button clicked');
-                    logout();
-                    navigate('/');
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105"
-                  title="Logout"
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-lg hover:shadow-lg transition-all duration-300 transform hover:scale-110"
+                  title="Profile"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  <span className="hidden sm:inline">Logout</span>
+                  {user?.name ? user.name.charAt(0).toUpperCase() : '👤'}
                 </button>
               </div>
+              
+              {/* Dropdown with fixed positioning but calculated position */}
+              {profileOpen && (
+                <div 
+                  className="fixed w-64 bg-white rounded-xl shadow-xl p-4 border"
+                  style={{ 
+                    zIndex: 99999,
+                    position: 'fixed',
+                    top: '80px',
+                    right: '32px'
+                  }}
+                >
+                  <div className="text-center mb-3">
+                    <p className="text-gray-900 font-semibold">{user?.name || 'User'}</p>
+                    <p className="text-gray-600 text-sm">{user?.email || 'No email'}</p>
+                  </div>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDropdownLogout();
+                    }}
+                    className="w-full text-center py-3 bg-red-500 text-white font-semibold rounded-lg cursor-pointer hover:bg-red-600 transition-colors"
+                    style={{ 
+                      pointerEvents: 'auto',
+                      border: 'none',
+                      outline: 'none'
+                    }}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             location.pathname !== '/login' && (
