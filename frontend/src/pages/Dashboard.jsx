@@ -3,6 +3,7 @@ import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import api from '../api';
+import { getUploadUrl } from '../config/api';
 import AnimatedBackground from '../components/layout/AnimatedBackground';
 import ParticleSystem from '../components/layout/ParticleSystem';
 import EnhancedCard from '../components/ui/EnhancedCard';
@@ -252,8 +253,8 @@ function Dashboard() {
       setProcessingStage('Complete!');
       
       setPredictedImage(res.data.image.predictedImage);
-      setPredictedImageUrl(`http://localhost:5000/uploads/${res.data.image.predictedImage}`);
-      setOriginalImageUrl(`http://localhost:5000/uploads/${res.data.image.originalImage}`);
+      setPredictedImageUrl(getUploadUrl(res.data.image.predictedImage));
+      setOriginalImageUrl(getUploadUrl(res.data.image.originalImage));
       setHistory([res.data.image, ...history]);
       setImage(null);
       setImagePreview(null);
@@ -490,11 +491,11 @@ function Dashboard() {
                     <div className="flex gap-2">
                       <div className="relative group">
                         <img 
-                          src={`http://localhost:5000/uploads/${item.originalImage}`} 
+                          src={getUploadUrl(item.originalImage)} 
                           alt="Original" 
                           className="w-16 h-16 object-cover rounded-xl cursor-pointer hover:scale-105 transition-transform duration-300 hover:opacity-80"
                           onClick={() => {
-                            setLightboxSrc(`http://localhost:5000/uploads/${item.originalImage}`);
+                            setLightboxSrc(getUploadUrl(item.originalImage));
                             setLightboxAlt(`Original image - ${item.originalImage}`);
                             setLightboxOpen(true);
                           }}
@@ -505,11 +506,11 @@ function Dashboard() {
                       </div>
                       <div className="relative group">
                         <img 
-                          src={`http://localhost:5000/uploads/${item.predictedImage}`} 
+                          src={getUploadUrl(item.predictedImage)} 
                           alt="Predicted" 
                           className="w-16 h-16 object-cover rounded-xl cursor-pointer hover:scale-105 transition-transform duration-300 hover:opacity-80"
                           onClick={() => {
-                            setLightboxSrc(`http://localhost:5000/uploads/${item.predictedImage}`);
+                            setLightboxSrc(getUploadUrl(item.predictedImage));
                             setLightboxAlt(`Predicted image with craters - ${item.predictedImage}`);
                             setLightboxOpen(true);
                           }}

@@ -184,9 +184,24 @@ const PYTHON_API_URL = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:
   5. **Output Directory**: `dist` (should auto-detect)
   6. Redeploy
 
+**Error: "localhost:5000/api/auth/login:1 Failed to load resource: net::ERR_BLOCKED_BY_CLIENT"**
+- **Problem**: Frontend is trying to connect to localhost instead of deployed backend
+- **Solution**: 
+  1. Make sure `VITE_API_URL` environment variable is set in Vercel
+  2. Set it to your Render backend URL (e.g., `https://cratervision-backend.onrender.com`)
+  3. Rebuild and redeploy frontend
+
 **Error: "Build failed" or "Module not found"**
 - **Problem**: Wrong root directory or missing dependencies
 - **Solution**: Ensure Root Directory is set to `frontend` folder
+
+### CORS Issues
+**Error: "Access-Control-Allow-Origin" errors**
+- **Problem**: Backend doesn't allow requests from Vercel domain
+- **Solution**: In Render backend environment variables, add:
+  ```
+  FRONTEND_URL=https://your-vercel-app.vercel.app
+  ```
 
 ### Debug Commands
 ```bash

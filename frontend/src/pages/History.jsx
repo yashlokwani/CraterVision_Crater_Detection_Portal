@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
+import { getUploadUrl } from '../config/api';
 import AnimatedBackground from '../components/layout/AnimatedBackground';
 import ParticleSystem from '../components/layout/ParticleSystem';
 import EnhancedCard from '../components/ui/EnhancedCard';
@@ -148,13 +149,13 @@ function History() {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('Container clicked for original image:', item.originalImage);
-                            setLightboxSrc(`http://localhost:5000/uploads/${item.originalImage}`); 
+                            setLightboxSrc(getUploadUrl(item.originalImage)); 
                             setLightboxAlt('Original lunar image'); 
                             setLightboxOpen(true);
                           }}
                         >
                           <img 
-                            src={`http://localhost:5000/uploads/${item.originalImage}`} 
+                            src={getUploadUrl(item.originalImage)} 
                             alt="Original lunar image" 
                             className="w-full h-32 sm:h-48 object-cover rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl pointer-events-none" 
                           />
@@ -175,13 +176,13 @@ function History() {
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('Container clicked for predicted image:', item.predictedImage);
-                            setLightboxSrc(`http://localhost:5000/uploads/${item.predictedImage}`); 
+                            setLightboxSrc(getUploadUrl(item.predictedImage)); 
                             setLightboxAlt('Predicted lunar image with craters'); 
                             setLightboxOpen(true);
                           }}
                         >
                           <img 
-                            src={`http://localhost:5000/uploads/${item.predictedImage}`} 
+                            src={getUploadUrl(item.predictedImage)} 
                             alt="Predicted lunar image with craters" 
                             className="w-full h-32 sm:h-48 object-cover rounded-2xl shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl pointer-events-none" 
                           />

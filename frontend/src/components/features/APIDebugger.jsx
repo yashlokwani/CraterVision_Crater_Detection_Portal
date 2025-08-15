@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { getApiUrl } from '../../config/api';
 
-const APIDebugger = () => {
+export default function APIDebugger() {
   const [isOpen, setIsOpen] = useState(false);
   const [healthStatus, setHealthStatus] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -17,7 +18,7 @@ const APIDebugger = () => {
     try {
       addLog('Starting health check...', 'info');
       
-      const response = await fetch('http://localhost:5000/api/health', {
+      const response = await fetch(getApiUrl('/api/health'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -40,7 +41,7 @@ const APIDebugger = () => {
   const testBackendConnection = async () => {
     try {
       addLog('Testing backend connection...', 'info');
-      const response = await fetch('http://localhost:5000');
+      const response = await fetch(getApiUrl(''));
       addLog(`Backend responded with status: ${response.status}`, response.ok ? 'success' : 'error');
     } catch (error) {
       addLog(`Backend connection failed: ${error.message}`, 'error');
@@ -116,5 +117,3 @@ const APIDebugger = () => {
     </div>
   );
 };
-
-export default APIDebugger;
