@@ -118,7 +118,14 @@ router.post('/upload', auth, upload.single('image'), async (req, res) => {
       console.log('✅ Python API prediction successful');
       
     } catch (apiErr) {
-      console.warn('⚠️ Python API not available, creating mock prediction:', apiErr.message);
+      console.error('❌ Python API Error Details:');
+      console.error('- URL attempted:', pythonApiUrl + '/predict');
+      console.error('- Error type:', apiErr.code || 'Unknown');
+      console.error('- Error message:', apiErr.message);
+      console.error('- Response status:', apiErr.response?.status || 'No response');
+      console.error('- Response data:', apiErr.response?.data || 'No data');
+      
+      console.warn('⚠️ Python API not available, creating mock prediction');
       
       // Fallback: Create a mock prediction by copying the resized image
       try {

@@ -14,6 +14,19 @@ CORS(app)  # Enable CORS for all routes
 # Load your YOLO model
 model = YOLO('best.pt')
 
+@app.route('/', methods=['GET'])
+def root():
+    """Root endpoint to test if service is running"""
+    return {
+        'message': 'CraterVision YOLO API is running!',
+        'service': 'YOLO API',
+        'status': 'active',
+        'endpoints': {
+            'health': '/health',
+            'predict': '/predict'
+        }
+    }, 200
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint for Render"""
@@ -63,36 +76,54 @@ def postprocess_and_draw(img, results):
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    print("Received prediction request")
-    file = request.files['image']
-    img_bytes = file.read()
-    print(f"Image size: {len(img_bytes)} bytes")
-    img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
-    img = img.resize((1024, 1024))  # Ensure correct size
-    print(f"Resized image to: {img.size}")
+    try:
+        print("🔄 Received prediction request")
+        
+        if 'image' not in request.files:
+            print("❌ No image file in request")
+            return {'error': 'No image file provided'}, 400
+            
+        file = request.files['image']
+        if file.filename == '':
+            print("❌ Empty filename")
+            return {'error': 'No file selected'}, 400
+        
+        img_bytes = file.read()
+        print(f"📷 Image received: {len(img_bytes)} bytes")
+        
+        img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
+        img = img.resize((1024, 1024))  # Ensure correct size
+        print(f"🔧 Resized image to: {img.size}")
 
-    # Run inference
-    print("Running YOLO inference...")
-    results = model.predict(
-        source=np.array(img),
-        save=False,
-        save_txt=False,
-        imgsz=1024
-    )
-    print(f"YOLO results: {len(results)} detections")
+        # Run inference
+        print("🔍 Running YOLO inference...")
+        results = model.predict(
+            source=np.array(img),
+            save=False,
+            save_txt=False,
+            imgsz=1024
+        )
+        print(f"✅ YOLO completed: {len(results)} result sets")
 
-    # Postprocess and draw boxes/scores
-    print("Post-processing image...")
-    result_img = postprocess_and_draw(img, results)
-    print(f"Post-processed image size: {result_img.size}")
+        # Postprocess and draw boxes/scores
+        print("🎨 Post-processing image...")
+        result_img = postprocess_and_draw(img, results)
+        print(f"✅ Post-processed image size: {result_img.size}")
 
-    # Save to buffer and send as response
-    buf = io.BytesIO()
-    result_img.save(buf, format='JPEG')
-    buf.seek(0)
-    response_size = len(buf.getvalue())
-    print(f"Sending response: {response_size} bytes")
-    return send_file(buf, mimetype='image/jpeg')
+        # Save to buffer and send as response
+        buf = io.BytesIO()
+        result_img.save(buf, format='JPEG')
+        buf.seek(0)
+        response_size = len(buf.getvalue())
+        print(f"📤 Sending response: {response_size} bytes")
+        return send_file(buf, mimetype='image/jpeg')
+        
+    except Exception as e:
+        print(f"❌ Error in predict endpoint: {str(e)}")
+        print(f"❌ Error type: {type(e).__name__}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
+        return {'error': f'Prediction failed: {str(e)}'}, 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
